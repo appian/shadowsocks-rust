@@ -297,9 +297,8 @@ pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) ->
         (AddrFamily::Ipv6, ..) => SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 0),
     };
 
-    error!("-----> ConnectOpts: {}", config);
+    error!("-----> ConnectOpts: {:?}", config);
     error!("------> Bind addr: {}", bind_addr);
-    error!("------> Bind addr unwrap: {}", bind_addr.unwrap());
 
     bind_outbound_udp_socket(&bind_addr, config).await
 }
