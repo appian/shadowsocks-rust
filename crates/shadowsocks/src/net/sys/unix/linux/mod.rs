@@ -1,5 +1,6 @@
 use std::{
     io, mem,
+    backtrace::Backtrace,
     net::{Ipv4Addr, Ipv6Addr, SocketAddr},
     os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd},
     pin::Pin,
@@ -285,12 +286,20 @@ pub fn set_disable_ip_fragmentation<S: AsRawFd>(af: AddrFamily, socket: &S) -> i
 /// Create a `UdpSocket` with specific address family
 #[inline]
 pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) -> io::Result<UdpSocket> {
+
+    error!("-----> Creating Outbound UDP socket!");
+    error!("Stack trace: {}", Backtrace::capture());
+
     let bind_addr = match (af, config.bind_local_addr) {
         (AddrFamily::Ipv4, Some(SocketAddr::V4(addr))) => addr.into(),
         (AddrFamily::Ipv6, Some(SocketAddr::V6(addr))) => addr.into(),
         (AddrFamily::Ipv4, ..) => SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 0),
         (AddrFamily::Ipv6, ..) => SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 0),
     };
+
+    error!("-----> ConnectOpts: {}", config);
+    error!("------> Bind addr: {}", bind_addr);
+    error!("------> Bind addr unwrap: {}", bind_addr.unwrap());
 
     bind_outbound_udp_socket(&bind_addr, config).await
 }
@@ -309,6 +318,8 @@ pub async fn bind_outbound_udp_socket(bind_addr: &SocketAddr, config: &ConnectOp
         socket.set_nonblocking(true)?;
         UdpSocket::from_std(socket.into())?
     };
+
+    error!("------> Socket file descriptor: {}", socket.as_raw_fd());
 
     if !config.udp.allow_fragmentation {
         if let Err(err) = set_disable_ip_fragmentation(af, &socket) {
