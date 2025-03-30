@@ -318,6 +318,7 @@ pub async fn bind_outbound_udp_socket(bind_addr: &SocketAddr, config: &ConnectOp
         UdpSocket::from_std(socket.into())?
     };
 
+    error!("------> Bind addr: {}", bind_addr);
     error!("------> Socket file descriptor: {}", socket.as_raw_fd());
 
     if !config.udp.allow_fragmentation {
