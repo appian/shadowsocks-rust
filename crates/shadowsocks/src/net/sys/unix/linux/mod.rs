@@ -51,6 +51,8 @@ impl TcpStream {
         TcpStream::connect_with_socket(socket, addr, opts).await
     }
 
+    error!("------> Bind addr: {}", addr);
+
     async fn connect_with_socket(socket: TcpSocket, addr: SocketAddr, opts: &ConnectOpts) -> io::Result<TcpStream> {
         // Any traffic to localhost should not be protected
         // This is a workaround for VPNService
@@ -230,6 +232,8 @@ fn create_mptcp_socket(bind_addr: &SocketAddr) -> io::Result<TcpSocket> {
         socket.set_nonblocking(true)?;
         Ok(TcpSocket::from_raw_fd(socket.into_raw_fd()))
     }
+
+    error!("------> Bind addr: {}", bind_addr);
 }
 
 /// Create a TCP socket for listening
@@ -242,6 +246,8 @@ pub async fn create_inbound_tcp_socket(bind_addr: &SocketAddr, accept_opts: &Acc
             SocketAddr::V6(..) => TcpSocket::new_v6(),
         }
     }
+
+    error!("------> Bind addr: {}", bind_addr);
 }
 
 /// Disable IP fragmentation
