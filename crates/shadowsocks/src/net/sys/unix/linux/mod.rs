@@ -1,6 +1,5 @@
 use std::{
     io, mem,
-    backtrace::Backtrace,
     net::{Ipv4Addr, Ipv6Addr, SocketAddr},
     os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd},
     pin::Pin,
@@ -50,8 +49,6 @@ impl TcpStream {
         let socket = create_mptcp_socket(&addr)?;
         TcpStream::connect_with_socket(socket, addr, opts).await
     }
-
-    error!("------> Bind addr: {}", addr);
 
     async fn connect_with_socket(socket: TcpSocket, addr: SocketAddr, opts: &ConnectOpts) -> io::Result<TcpStream> {
         // Any traffic to localhost should not be protected
@@ -232,8 +229,6 @@ fn create_mptcp_socket(bind_addr: &SocketAddr) -> io::Result<TcpSocket> {
         socket.set_nonblocking(true)?;
         Ok(TcpSocket::from_raw_fd(socket.into_raw_fd()))
     }
-
-    error!("------> Bind addr: {}", bind_addr);
 }
 
 /// Create a TCP socket for listening
@@ -246,8 +241,6 @@ pub async fn create_inbound_tcp_socket(bind_addr: &SocketAddr, accept_opts: &Acc
             SocketAddr::V6(..) => TcpSocket::new_v6(),
         }
     }
-
-    error!("------> Bind addr: {}", bind_addr);
 }
 
 /// Disable IP fragmentation
@@ -293,7 +286,7 @@ pub fn set_disable_ip_fragmentation<S: AsRawFd>(af: AddrFamily, socket: &S) -> i
 #[inline]
 pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) -> io::Result<UdpSocket> {
 
-    error!("-----> Creating Outbound UDP socket!");
+    error!("-----> create_outbound_udp_socket Creating Outbound UDP socket!");
 
     let bind_addr = match (af, config.bind_local_addr) {
         (AddrFamily::Ipv4, Some(SocketAddr::V4(addr))) => addr.into(),
@@ -302,10 +295,10 @@ pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) ->
         (AddrFamily::Ipv6, ..) => SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 0),
     };
 
-    error!("-----> ConnectOpts: {:?}", config);
-    error!("------> Bind addr: {}", bind_addr);
-    error!("------> AF: {:?}", af);
-    error!("------> config.bind_local_addr: {:?}", config.bind_local_addr);
+    error!("-----> create_outbound_udp_socket ConnectOpts: {:?}", config);
+    error!("-----> create_outbound_udp_socket Bind addr: {}", bind_addr);
+    error!("-----> create_outbound_udp_socket AF: {:?}", af);
+    error!("-----> create_outbound_udp_socket config.bind_local_addr: {:?}", config.bind_local_addr);
 
     bind_outbound_udp_socket(&bind_addr, config).await
 }
@@ -325,8 +318,8 @@ pub async fn bind_outbound_udp_socket(bind_addr: &SocketAddr, config: &ConnectOp
         UdpSocket::from_std(socket.into())?
     };
 
-    error!("------> Bind addr: {}", bind_addr);
-    error!("------> Socket file descriptor: {}", socket.as_raw_fd());
+    error!("------> bind_outbound_udp_socket Bind addr: {}", bind_addr);
+    error!("------> bind_outbound_udp_socket Socket file descriptor: {}", socket.as_raw_fd());
 
     if !config.udp.allow_fragmentation {
         if let Err(err) = set_disable_ip_fragmentation(af, &socket) {

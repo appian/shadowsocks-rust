@@ -14,7 +14,7 @@ use std::{
 
 use byte_string::ByteStr;
 use bytes::{Bytes, BytesMut};
-use log::{info, trace, warn};
+use log::{info, trace, warn, debug};
 use once_cell::sync::Lazy;
 use tokio::{io::ReadBuf, time};
 
@@ -104,6 +104,9 @@ impl ProxySocket<ShadowUdpSocket> {
         // Note: Plugins doesn't support UDP relay
 
         let socket = ShadowUdpSocket::connect_server_with_opts(&context, svr_cfg.udp_external_addr(), opts).await?;
+        debug!("-----> context: {:?}", &context);
+        debug!("-----> server config: {:?}", svr_cfg.udp_external_addr());
+        debug!("-----> opts: {:?}", opts);
 
         trace!(
             "connected udp remote {} (outbound: {}) with {:?}",

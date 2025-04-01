@@ -694,6 +694,8 @@ impl UdpAssociationContext {
             }
         };
 
+        debug!("-----> send_received_outbound_packet original target addr: {:?}: ", original_target_addr);
+        debug!("-----> send_received_outbound_packet target addr: {:?}: ", target_addr);
         let socket = match target_addr {
             SocketAddr::V4(..) => match self.outbound_ipv4_socket {
                 Some(ref mut socket) => socket,

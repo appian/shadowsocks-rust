@@ -91,6 +91,7 @@ pub struct UdpSocket {
     mtu: Option<usize>,
 }
 
+use log::{debug};
 impl UdpSocket {
     /// Connects to shadowsocks server
     pub async fn connect_server_with_opts(
@@ -101,12 +102,14 @@ impl UdpSocket {
         let socket = match *addr {
             ServerAddr::SocketAddr(ref remote_addr) => {
                 let socket = create_outbound_udp_socket(From::from(remote_addr), opts).await?;
+                debug!("-----> connect_server_with_opts remote_addr/AF: {:?}", remote_addr);
                 socket.connect(remote_addr).await?;
                 socket
             }
             ServerAddr::DomainName(ref dname, port) => {
                 lookup_then!(context, dname, port, |remote_addr| {
                     let s = create_outbound_udp_socket(From::from(&remote_addr), opts).await?;
+                    debug!("-----> connect_server_with_opts remote_addr/AF: {:?}", &remote_addr);
                     s.connect(remote_addr).await.map(|_| s)
                 })?
                 .1
@@ -128,12 +131,14 @@ impl UdpSocket {
         let socket = match *addr {
             Address::SocketAddress(ref remote_addr) => {
                 let socket = create_outbound_udp_socket(From::from(remote_addr), opts).await?;
+                debug!("-----> connect_remote_with_opts remote_addr/AF: {:?}", remote_addr);
                 socket.connect(remote_addr).await?;
                 socket
             }
             Address::DomainNameAddress(ref dname, port) => {
                 lookup_then!(context, dname, port, |remote_addr| {
                     let s = create_outbound_udp_socket(From::from(&remote_addr), opts).await?;
+                    debug!("-----> connect_remote_with_opts remote_addr/AF: {:?}", &remote_addr);
                     s.connect(remote_addr).await.map(|_| s)
                 })?
                 .1
@@ -149,6 +154,8 @@ impl UdpSocket {
     /// Connects to shadowsocks server
     pub async fn connect_with_opts(addr: &SocketAddr, opts: &ConnectOpts) -> io::Result<UdpSocket> {
         let socket = create_outbound_udp_socket(From::from(addr), opts).await?;
+        debug!("-----> connect_with_opts socketAddr: {:?}", addr);
+        debug!("-----> connect_with_opts opts: {:?}", opts);
         socket.connect(addr).await?;
         Ok(UdpSocket {
             socket,
@@ -157,7 +164,9 @@ impl UdpSocket {
     }
 
     /// Binds to a specific address with opts
-    pub async fn connect_any_with_opts<AF: Into<AddrFamily>>(af: AF, opts: &ConnectOpts) -> io::Result<UdpSocket> {
+    pub async fn connect_any_with_opts<AF: Into<AddrFamily> + std::fmt::Debug>(af: AF, opts: &ConnectOpts) -> io::Result<UdpSocket> {
+        debug!("-----> connect_any_with_opts af: {:?}", af);
+        debug!("-----> connect_any_with_opts opts: {:?}", opts);
         create_outbound_udp_socket(af.into(), opts)
             .await
             .map(|socket| UdpSocket {

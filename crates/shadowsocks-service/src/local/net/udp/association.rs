@@ -470,7 +470,7 @@ where
         }
     }
 
-    async fn send_received_bypassed_packet(&mut self, mut target_addr: SocketAddr, data: &[u8]) -> io::Result<()> {
+    async fn send_received_bypassed_packet std::fmt::Debug (&mut self, mut target_addr: SocketAddr, data: &[u8]) -> io::Result<()> {
         const UDP_SOCKET_SUPPORT_DUAL_STACK: bool = cfg!(any(
             target_os = "linux",
             target_os = "android",
@@ -481,6 +481,11 @@ where
             target_os = "freebsd",
             target_os = "windows",
         ));
+
+        debug!("-----> send_received_bypassed_packet target addr: {:?}: ", target_addr);
+        debug!("-----> send_received_bypassed_packet self: {:?}: ", self);
+        debug!("-----> send_received_bypassed_packet bypassed ipv4: {:?}: ", self.bypassed_ipv4_socket);
+        debug!("-----> send_received_bypassed_packet bypassed ipv4: {:?}: ", self.bypassed_ipv6_socket);
 
         let socket = if UDP_SOCKET_SUPPORT_DUAL_STACK {
             match self.bypassed_ipv6_socket {
