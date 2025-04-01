@@ -294,7 +294,6 @@ pub fn set_disable_ip_fragmentation<S: AsRawFd>(af: AddrFamily, socket: &S) -> i
 pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) -> io::Result<UdpSocket> {
 
     error!("-----> Creating Outbound UDP socket!");
-    error!("Stack trace: {}", Backtrace::capture());
 
     let bind_addr = match (af, config.bind_local_addr) {
         (AddrFamily::Ipv4, Some(SocketAddr::V4(addr))) => addr.into(),
@@ -305,6 +304,8 @@ pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) ->
 
     error!("-----> ConnectOpts: {:?}", config);
     error!("------> Bind addr: {}", bind_addr);
+    error!("------> AF: {:?}", af);
+    error!("------> config.bind_local_addr: {:?}", config.bind_local_addr);
 
     bind_outbound_udp_socket(&bind_addr, config).await
 }
