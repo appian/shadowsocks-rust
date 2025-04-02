@@ -488,7 +488,7 @@ where
             match self.bypassed_ipv6_socket {
                 Some(ref mut socket) => {
                     debug!("-----> send_received_bypassed_packet HELLO I MATCHED BYPASSED_IPV6_SOCKET AND CONNECTED WITH IPV6");
-                    socket;
+                    socket
                 }
                 None => {
                     debug!("-----> send_received_bypassed_packet HELLO I MATCHED BYPASSED_IPV6_SOCKET AND CONNECTED WITH IPV6 - CASE NONE");
