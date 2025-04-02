@@ -1,6 +1,6 @@
 use std::{
-    io, mem,
-    net::{Ipv4Addr, Ipv6Addr, SocketAddr},
+    io, mem, io::ErrorKind, 
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
     os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd},
     pin::Pin,
     ptr,
@@ -20,7 +20,7 @@ use tokio_tfo::TfoStream;
 
 use crate::net::{
     AcceptOpts, AddrFamily, ConnectOpts,
-    sys::{set_common_sockopt_after_connect, set_common_sockopt_for_connect, socket_bind_dual_stack},
+    sys::{set_common_sockopt_after_connect, set_common_sockopt_for_connect, socket_bind_dual_stack, io::Error},
     udp::{BatchRecvMessage, BatchSendMessage},
 };
 
@@ -290,28 +290,43 @@ pub async fn create_outbound_udp_socket(af: AddrFamily, config: &ConnectOpts) ->
 
     let bind_addr = match (af, config.bind_local_addr) {
         (AddrFamily::Ipv4, Some(SocketAddr::V4(addr))) => {
-            debug!("-------> I MATCHED AddrFamily::Ipv4, Some(SocketAddr::V4(addr))");
-            debug!("af = {}, bind_addr = {}", af, addr);
+            debug!("-------> MATCHED AddrFamily::Ipv4, Some(SocketAddr::V4(addr))");
+            debug!("-------> af = {:?}, bind_addr = {:?}", af, config.bind_local_addr);
+            addr.into()
+        },
+        (AddrFamily::Ipv4, Some(SocketAddr::V6(addr))) => {
+            debug!("-------> MATCHED AddrFamily::Ipv4, Some(SocketAddr::V6(addr))");
+            debug!("-------> af = {:?}, bind_addr = {:?}", af, config.bind_local_addr);
+            {
+                // IPv6 address must be a IPv4-mapped IPv6 address
+                match addr.ip().to_ipv4_mapped() {
+                    Some(addr) => {
+                        let ip_addr: IpAddr = addr.into();
+                        SocketAddr::new(ip_addr, 0)
+                    },
+                    None => return Err(Error::new(ErrorKind::InvalidInput, "Invalid IPv6 address")),
+                }
+            }
+        },
+        (AddrFamily::Ipv6, Some(SocketAddr::V6(addr))) => {
+            debug!("-------> MATCHED AddrFamily::Ipv6, Some(SocketAddr::V6(addr))");
+            debug!("-------> af = {:?}, bind_addr = {:?}", af, config.bind_local_addr);
             addr.into()
         },
         (AddrFamily::Ipv6, Some(SocketAddr::V4(addr))) => {
-            debug!("-------> I MATCHED AddrFamily::Ipv6, Some(SocketAddr::V4(addr))");
-            debug!("af = {}, bind_addr = {}", af, addr);
-            addr.into()
-        },
-        (AddrFamily::Ipv6, Some(SocketAddr::V6(addr))) => {
-            debug!("-------> I MATCHED AddrFamily::Ipv6, Some(SocketAddr::V6(addr))");
-            debug!("af = {}, bind_addr = {}", af, addr);
-            addr.into()
+            debug!("-------> MATCHED AddrFamily::Ipv6, Some(SocketAddr::V4(addr))");
+            debug!("-------> af = {:?}, bind_addr = {:?}", af, config.bind_local_addr);
+            let ip_addr: IpAddr = addr.ip().to_ipv6_mapped().into();
+            SocketAddr::new(ip_addr, 0)
         },
         (AddrFamily::Ipv4, ..) => {
-            debug!("-------> I MATCHED AddrFamily::Ipv4, ..)");
-            debug!("af = {}, bind_addr = {}", af, addr);
+            debug!("-------> MATCHED AddrFamily::Ipv4, ..)");
+            debug!("-------> af = {:?}, bind_addr = {:?}", af, config.bind_local_addr);
             SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 0)
         },
         (AddrFamily::Ipv6, ..) => {
-            debug!("-------> I MATCHED AddrFamily::Ipv6, ..)");
-            debug!("af = {}, bind_addr = {}", af, addr);
+            debug!("-------> MATCHED AddrFamily::Ipv6, ..)");
+            debug!("-------> af = {:?}, bind_addr = {:?}", af, config.bind_local_addr);
             SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 0)
         },
     };
