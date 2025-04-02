@@ -470,7 +470,7 @@ where
         }
     }
 
-    async fn send_received_bypassed_packet std::fmt::Debug (&mut self, mut target_addr: SocketAddr, data: &[u8]) -> io::Result<()> {
+    async fn send_received_bypassed_packet (&mut self, mut target_addr: SocketAddr, data: &[u8]) -> io::Result<()> {
         const UDP_SOCKET_SUPPORT_DUAL_STACK: bool = cfg!(any(
             target_os = "linux",
             target_os = "android",
@@ -483,14 +483,15 @@ where
         ));
 
         debug!("-----> send_received_bypassed_packet target addr: {:?}: ", target_addr);
-        debug!("-----> send_received_bypassed_packet self: {:?}: ", self);
-        debug!("-----> send_received_bypassed_packet bypassed ipv4: {:?}: ", self.bypassed_ipv4_socket);
-        debug!("-----> send_received_bypassed_packet bypassed ipv4: {:?}: ", self.bypassed_ipv6_socket);
 
         let socket = if UDP_SOCKET_SUPPORT_DUAL_STACK {
             match self.bypassed_ipv6_socket {
-                Some(ref mut socket) => socket,
+                Some(ref mut socket) => {
+                    debug!("-----> send_received_bypassed_packet HELLO I MATCHED BYPASSED_IPV6_SOCKET AND CONNECTED WITH IPV6");
+                    socket;
+                }
                 None => {
+                    debug!("-----> send_received_bypassed_packet HELLO I MATCHED BYPASSED_IPV6_SOCKET AND CONNECTED WITH IPV6 - CASE NONE");
                     let socket =
                         ShadowUdpSocket::connect_any_with_opts(AddrFamily::Ipv6, self.context.connect_opts_ref())
                             .await?;
@@ -500,6 +501,7 @@ where
         } else {
             match target_addr {
                 SocketAddr::V4(..) => match self.bypassed_ipv4_socket {
+                    debug!("-----> send_received_bypassed_packet HELLO I DID NOT MATCH BYPASSED_IPV6_SOCKET BUT MATCHED TARGET_ADDR AND CONNECTED WITH IPV4");
                     Some(ref mut socket) => socket,
                     None => {
                         let socket =
@@ -509,6 +511,7 @@ where
                     }
                 },
                 SocketAddr::V6(..) => match self.bypassed_ipv6_socket {
+                    debug!("-----> send_received_bypassed_packet HELLO I MATCHED BYPASSED_IPV6_SOCKET AND DID NOT MATCH TARGET_ADDR AND CONNECTED WITH IPV6");
                     Some(ref mut socket) => socket,
                     None => {
                         let socket =
